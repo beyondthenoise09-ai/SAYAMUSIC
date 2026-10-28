@@ -385,6 +385,7 @@ fun HomeScreen(
     var promoLaunchDecided by rememberSaveable {
         mutableStateOf(false)
     }
+    var showSayaIntroDialog by remember { mutableStateOf(true) }
     var promoBanner by remember {
         mutableStateOf<PromoBannerData?>(null)
     }
@@ -448,28 +449,34 @@ fun HomeScreen(
         }
     }
     LaunchedEffect(openAppTime, shareLyricsPermissions) {
-        Logger.w("HomeScreen", "openAppTime: $openAppTime, shareLyricsPermissions: $shareLyricsPermissions")
-        if (openAppTime >= 10 && openAppTime % 10 == 0 && openAppTime <= 50) {
-            showReviewDialog = true
-        } else if ((openAppTime == 1 || openAppTime % 15 == 0) && openAppTime <= 60 && !shareLyricsPermissions) {
-            showRequestShareLyricsPermissions = true
-        } else if (openAppTime == 5) {
-            // Blog promo: one-shot after 5 app opens, bump key suffix to re-promote later
-            if (sharedViewModel.getString(BLOG_PROMO_KEY) != "true") {
-                showBlogPromoDialog = true
+        showReviewDialog = false
+        showFootgunsDialog = false
+        showBlogPromoDialog = false
+        showRequestShareLyricsPermissions = false
+    }
+    if (showSayaIntroDialog) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { showSayaIntroDialog = false },
+            title = {
+                androidx.compose.material3.Text(
+                    text = "Welcome to SAYA MUSIC 🎧",
+                    style = androidx.compose.material3.MaterialTheme.typography.titleMedium
+                )
+            },
+            text = {
+                androidx.compose.material3.Text(
+                    text = "Crafted with ❤️ by Chandan Nayak .\n\nEnjoy an ad-free, high-quality music streaming experience with background playback.",
+                    style = androidx.compose.material3.MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                androidx.compose.material3.TextButton(
+                    onClick = { showSayaIntroDialog = false }
+                ) {
+                    androidx.compose.material3.Text("Let's Vibe 🚀")
+                }
             }
-        } else if (openAppTime % 10 == 6 &&
-            openAppTime <= 46 &&
-            sharedViewModel.getString(FOOTGUNS_STAR_KEY) != "true"
-        ) {
-            // kotlin-footguns star prompt: 6, 16, 26, 36, 46 - one open after each review milestone,
-            // and clear of the share-lyrics (15, 45) and blog-promo (5) milestones
-            showFootgunsDialog = true
-        } else {
-            showReviewDialog = false
-            showFootgunsDialog = false
-            showRequestShareLyricsPermissions = false
-        }
+        )
     }
 
     val shouldStartPaginate =
@@ -504,68 +511,13 @@ fun HomeScreen(
 //        )
 //    }
 
-    if (showReviewDialog) {
-        ReviewDialog(
-            onDismissRequest = {
-                sharedViewModel.onDoneReview(
-                    isDismissOnly = true,
-                )
-                showReviewDialog = false
-            },
-            onDoneReview = {
-                sharedViewModel.onDoneReview(
-                    isDismissOnly = false,
-                )
-                showReviewDialog = false
-            },
-        )
-    }
+    
 
-    if (showFootgunsDialog) {
-        FootgunsStarDialog(
-            onDismissRequest = {
-                // "Later" advances OPEN_APP_TIME, the same way the review and share-lyrics dialogs do.
-                // Home's launch effect runs again every time Home re-enters composition, reading the
-                // stored count; leaving it untouched kept the milestone condition true, so the prompt
-                // came back on every return to Home until the app was restarted.
-                showFootgunsDialog = false
-                sharedViewModel.onDoneReview(isDismissOnly = true)
-            },
-            onDoneStar = {
-                sharedViewModel.putString(FOOTGUNS_STAR_KEY, "true")
-                showFootgunsDialog = false
-            },
-        )
-    }
+    
 
-    if (showBlogPromoDialog) {
-        BlogPromoDialog(
-            onDismissRequest = {
-                sharedViewModel.putString(BLOG_PROMO_KEY, "true")
-                showBlogPromoDialog = false
-            },
-            onVisitBlog = {
-                sharedViewModel.putString(BLOG_PROMO_KEY, "true")
-                showBlogPromoDialog = false
-            },
-        )
-    }
+    
 
-    if (showRequestShareLyricsPermissions) {
-        ShareSavedLyricsDialog(
-            onDismissRequest = {
-                showRequestShareLyricsPermissions = false
-                sharedViewModel.onDoneReview(
-                    isDismissOnly = true,
-                )
-            },
-            onConfirm = { contributor ->
-                sharedViewModel.onDoneRequestingShareLyrics(
-                    contributor,
-                )
-            },
-        )
-    }
+
 
     val otherDialogOpen =
         appDialogOpen || showReviewDialog || showRequestShareLyricsPermissions || showBlogPromoDialog ||
