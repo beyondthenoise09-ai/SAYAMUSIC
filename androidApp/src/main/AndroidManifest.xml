@@ -76,10 +76,10 @@
         tools:targetApi="tiramisu">
 
         <activity
-            
             android:name=".MainActivity"
             android:label="SAYA MUSIC"
-            android:configChanges="keyboardHidden|screenSize|screenLayout|smallestScreenSize"android:exported="true"
+            android:configChanges="keyboardHidden|screenSize|screenLayout|smallestScreenSize"
+            android:exported="true"
             android:supportsPictureInPicture="true"
             android:enableOnBackInvokedCallback="true"
             android:launchMode="singleTask"
